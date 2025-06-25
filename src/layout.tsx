@@ -11,10 +11,10 @@ export default function MainLayout({
 }) {
   return (
     <KindeProvider
-      clientId="0f53e84aa89845a5a5d9e02225e244b3"
-      domain="https://jgrove.kinde.com"
-      redirectUri="http://localhost:3000"
-      logoutUri="http://localhost:3000"
+      clientId={import.meta.env.VITE_KINDE_CLIENT_ID}
+      domain={import.meta.env.VITE_KINDE_DOMAIN}
+      redirectUri={import.meta.env.VITE_KINDE_REDIRECT_URI}
+      logoutUri={import.meta.env.VITE_KINDE_LOGOUT_URI}
     >
       <ThemeProvider>
         <SidebarProvider>
