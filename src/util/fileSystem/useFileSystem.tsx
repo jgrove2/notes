@@ -20,6 +20,7 @@ interface useFileSystemState {
     createNewFile: (fileName: string, content?: string) => Promise<void>;
 }
 
+
 export const useFileSystemState = create<useFileSystemState>((set, get) => ({
     files: {},
     currentFile: '',
