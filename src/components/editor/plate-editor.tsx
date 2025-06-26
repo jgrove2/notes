@@ -67,8 +67,6 @@ export function PlateEditor() {
           <EditorContainer>
             <Editor variant="demo" style={{ height: "calc(100% - 6rem)" }} />
           </EditorContainer>
-
-          <SettingsDialog />
         </Plate>
   );
 }
