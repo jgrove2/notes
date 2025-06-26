@@ -21,7 +21,7 @@ export default function MainLayout({
           <AppSidebar />
           <div className="flex-1 flex flex-col w-full overflow-hidden">
             <MainNavigation />
-            <main className="flex-1 overflow-hidden">{children}</main>
+            <main className="overflow-hidden" style={{height: "calc(100vh - 4rem)"}}>{children}</main>
           </div>
         </SidebarProvider>
       </ThemeProvider>

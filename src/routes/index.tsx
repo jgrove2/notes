@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Editor } from '~/components/ui/editor/editor'
+import { PlateEditor } from '~/components/editor/plate-editor'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -7,6 +7,6 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-      <Editor />
+      <PlateEditor />
   )
 }

@@ -16,11 +16,14 @@ import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "~/util/theme/useTheme";
 import { Button } from "./ui/button";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
+import { useEditor } from "./editor/editor-kit";
+import { useEditorState } from "~/util/editor/editorState";
 
 export function MainNavigation() {
   const { login, logout, isAuthenticated } = useKindeAuth();
   const { selectDirectory, createNewFile, saveFile, currentFile, files } =
     useFileSystemState();
+  const { markdownText } = useEditorState();
   const { theme, setTheme } = useTheme();
 
   const handleNewFile = async () => {
@@ -81,7 +84,16 @@ export function MainNavigation() {
                 {theme === "dark" ? <MoonIcon /> : <SunIcon />}
               </Toggle>
             </NavigationMenuItem>
-
+            {currentFile && (
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => saveFile(currentFile, markdownText)}
+                >
+                  Save File
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            )}
             <NavigationMenuItem>
               <NavigationMenuLink
                 onClick={() => {
