@@ -30,7 +30,6 @@ import { LinkKit } from '~/components/editor/plugins/link-kit';
 import { ListKit } from '~/components/editor/plugins/list-kit';
 import { MarkdownKit } from '~/components/editor/plugins/markdown-kit';
 import { MathKit } from '~/components/editor/plugins/math-kit';
-import { MediaKit } from '~/components/editor/plugins/media-kit';
 import { MentionKit } from '~/components/editor/plugins/mention-kit';
 import { SlashKit } from '~/components/editor/plugins/slash-kit';
 import { SuggestionKit } from '~/components/editor/plugins/suggestion-kit';
