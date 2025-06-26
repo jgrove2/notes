@@ -48,7 +48,7 @@ export const EditorKit = [
   ...TableKit,
   ...ToggleKit,
   ...TocKit,
-  ...MediaKit,
+  // ...MediaKit,
   ...CalloutKit,
   ...ColumnKit,
   ...MathKit,
