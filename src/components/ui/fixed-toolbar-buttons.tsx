@@ -70,7 +70,7 @@ export function FixedToolbarButtons() {
               <ArrowUpToLineIcon />
             </ExportToolbarButton>
 
-            <ImportToolbarButton />
+            {/* <ImportToolbarButton /> */}
           </ToolbarGroup>
 
           <ToolbarGroup>
