@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useEffect, useState } from "react";
 import { useEditorState } from "~/util/editor/editorState";
 import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
-import { Editable, useEditor } from "@wysimark/react"
+import { Editable, useEditor } from "@wysimark/react";
 import { useComputedTheme } from "~/util/theme/useTheme";
 
 interface EditorProps {
@@ -13,18 +13,12 @@ type EditorModes = "view" | "edit";
 export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
   const [currentEdit, setCurrentEdit] = useState<string>("");
   const theme = useComputedTheme();
-  
-  const {
-    setMarkdownText,
-  } = useEditorState();
 
-  const {
-    files,
-    currentFile,
-    saveFile,
-  } = useFileSystemState();
+  const { setMarkdownText } = useEditorState();
 
-  const editor = useEditor({})
+  const { files, currentFile, saveFile } = useFileSystemState();
+
+  const editor = useEditor({});
 
   // Load file content when currentFile changes
   useEffect(() => {
@@ -33,36 +27,38 @@ export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
       setMarkdownText(content);
       setCurrentEdit(content);
     }
-  }, [currentFile, files, setMarkdownText ]);
+  }, [currentFile, files, setMarkdownText]);
 
   function handleInput(e: string) {
     // Get the text content (not innerHTML) to avoid HTML issues
-    const newMarkdown = e || '';
+    const newMarkdown = e || "";
     setCurrentEdit(newMarkdown);
-    saveFile(currentFile, newMarkdown)
   }
-
 
   return (
     <div className={`editor`}>
-        {currentEdit ? <Editable 
-          editor={editor} 
-          value={currentEdit} 
-          onChange={handleInput} 
+      {currentEdit ? (
+        <Editable
+          editor={editor}
+          value={currentEdit}
+          onChange={handleInput}
           style={{
-            color: theme === 'dark' ? '#ffffff' : '#000000',
-            backgroundColor: theme === 'dark' ? '#1e1e1e' : '#ffffff',
+            color: theme === "dark" ? "#ffffff" : "#000000",
+            backgroundColor: theme === "dark" ? "#1e1e1e" : "#ffffff",
             fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-            fontSize: '14px',
-            lineHeight: '1.6',
-            padding: '20px',
-            border: 'none',
-            outline: 'none',
-            width: '100%',
-            height: '100%',
-            resize: 'none'
+            fontSize: "14px",
+            lineHeight: "1.6",
+            padding: "20px",
+            border: "none",
+            outline: "none",
+            width: "100%",
+            height: "100%",
+            resize: "none",
           }}
-        /> : <h4>No file selected</h4>}
-      </div>
+        />
+      ) : (
+        <h4>No file selected</h4>
+      )}
+    </div>
   );
-}
+};

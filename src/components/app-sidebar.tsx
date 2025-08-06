@@ -19,7 +19,7 @@ import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 export function AppSidebar() {
   const { state, open, openMobile, setOpenMobile, isMobile, toggleSidebar } =
     useSidebar();
-  
+
   const {
     files,
     currentFile,
@@ -48,9 +48,9 @@ export function AppSidebar() {
   };
 
   const handleCreateNewFile = async () => {
-    const fileName = prompt('Enter file name (with .md extension):');
+    const fileName = prompt("Enter File Name:");
     if (fileName && !files[fileName]) {
-      await createNewFile(fileName, '# New Document\n\nStart writing...');
+      await createNewFile(fileName, `{}`);
     }
   };
 
@@ -63,7 +63,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <h2 className="text-lg font-semibold">Notes</h2>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
@@ -76,9 +76,9 @@ export function AppSidebar() {
                 variant="outline"
               >
                 <FolderOpen className="w-4 h-4 mr-2" />
-                {directoryHandle ? 'Change Directory' : 'Open Directory'}
+                {directoryHandle ? "Change Directory" : "Open Directory"}
               </Button>
-              
+
               {directoryHandle && (
                 <Button
                   onClick={handleCreateNewFile}
@@ -124,12 +124,10 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-      
+
       <SidebarFooter className="p-4">
         {isLoading && (
-          <div className="text-sm text-muted-foreground">
-            Loading...
-          </div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
         )}
         {directoryHandle && (
           <div className="text-xs text-muted-foreground">
