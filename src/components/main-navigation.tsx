@@ -18,20 +18,69 @@ import { Button } from "./ui/button";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { useEditor } from "./editor/editor-kit";
 import { useEditorState } from "~/util/editor/editorState";
+import { Save } from "lucide-react";
 
 export function MainNavigation() {
-  const { login, logout, isAuthenticated } = useKindeAuth();
-  const { selectDirectory, createNewFile, saveFile, currentFile, files } =
+  const { login, logout, isAuthenticated, getToken } = useKindeAuth();
+  const { createNewFile, saveFile, currentFile, files, lastSaved } =
     useFileSystemState();
   const { markdownText } = useEditorState();
   const { theme, setTheme } = useTheme();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+
+  // Track changes by comparing current content with last saved content
+  React.useEffect(() => {
+    if (currentFile && files[currentFile]?.content) {
+      const savedContent = files[currentFile].content?.content || "";
+      const currentContent = markdownText;
+      setHasUnsavedChanges(savedContent !== currentContent);
+    } else {
+      setHasUnsavedChanges(false);
+    }
+  }, [currentFile, files, markdownText]);
 
   const handleNewFile = async () => {
-    const fileName = prompt("Enter file name (with .md extension):");
+    const fileName = prompt("Enter file name (without extension):");
     if (fileName && !files[fileName]) {
-      await createNewFile(
-        `${fileName}.md`,
-        "# New Document\n\nStart writing..."
+      const token = await getToken();
+      if (token) {
+        const initialContent = {
+          content: "# New Document\n\nStart writing...",
+          lastModified: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        };
+        await createNewFile(fileName, initialContent, token);
+      }
+    }
+  };
+
+  const handleSaveFile = async () => {
+    console.log("Save button clicked");
+    console.log("Current file:", currentFile);
+    console.log("Has unsaved changes:", hasUnsavedChanges);
+    console.log("Current markdown text:", markdownText);
+
+    if (currentFile && hasUnsavedChanges) {
+      console.log("Attempting to save file:", currentFile);
+      const token = await getToken();
+      if (token) {
+        const contentToSave = {
+          content: markdownText,
+          lastModified: new Date().toISOString(),
+        };
+        console.log("Content to save:", contentToSave);
+        await saveFile(currentFile, contentToSave, token);
+        setHasUnsavedChanges(false);
+        console.log("Save completed");
+      } else {
+        console.log("No token available");
+      }
+    } else {
+      console.log(
+        "Save conditions not met - currentFile:",
+        currentFile,
+        "hasUnsavedChanges:",
+        hasUnsavedChanges
       );
     }
   };
@@ -39,19 +88,6 @@ export function MainNavigation() {
   const darkModeToggle = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
-
-  const fileMenuItems = [
-    {
-      title: "Open Directory",
-      description: "Select a directory to work from",
-      action: selectDirectory,
-    },
-    {
-      title: "New Document",
-      description: "Create a new markdown document",
-      action: handleNewFile,
-    },
-  ];
 
   return (
     <div className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -86,11 +122,25 @@ export function MainNavigation() {
             </NavigationMenuItem>
             {currentFile && (
               <NavigationMenuItem>
-                <NavigationMenuLink
-                  className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                  onClick={() => saveFile(currentFile, markdownText)}
+                <Button
+                  onClick={handleSaveFile}
+                  disabled={!hasUnsavedChanges}
+                  variant="ghost"
+                  size="sm"
+                  className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
-                  Save File
+                  <Save className="w-4 h-4 mr-1" />
+                  Save
+                </Button>
+              </NavigationMenuItem>
+            )}
+            {isAuthenticated && (
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  onClick={handleNewFile}
+                  className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                >
+                  New File
                 </NavigationMenuLink>
               </NavigationMenuItem>
             )}

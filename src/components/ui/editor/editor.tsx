@@ -16,7 +16,7 @@ export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
 
   const { setMarkdownText } = useEditorState();
 
-  const { files, currentFile, saveFile } = useFileSystemState();
+  const { files, currentFile } = useFileSystemState();
 
   const editor = useEditor({});
 

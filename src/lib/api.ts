@@ -24,6 +24,12 @@ export interface ApiError {
   status: number;
 }
 
+export interface FileStructureResponse {
+  fileStructure: Record<string, string | null>;
+  noteCount: number;
+  userId: number;
+}
+
 export async function fetchWithAuth(
   endpoint: string,
   options: RequestInit = {},
@@ -35,16 +41,21 @@ export async function fetchWithAuth(
 
   console.log("token", token);
 
+  // Prepare headers
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${token}`,
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Don't set Content-Type for FormData (browser will set it automatically with boundary)
+  if (!(options.body instanceof FormData)) {
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
+    headers,
   });
-
-  console.log("response", response);
 
   return response;
 }
@@ -111,6 +122,112 @@ export async function createUserProfile(
   }
 
   return response.json();
+}
+
+export async function fetchFileStructure(
+  token: string
+): Promise<FileStructureResponse> {
+  const response = await fetchWithAuth("/notes/structure", {}, token);
+
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchNote(filename: string, token: string): Promise<any> {
+  const response = await fetchWithAuth(`/notes/${filename}`, {}, token);
+
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+
+  return response.json();
+}
+
+export async function saveNote(
+  filename: string,
+  content: any,
+  token: string
+): Promise<void> {
+  console.log("saveNote API called with:", {
+    filename,
+    content,
+    token: token ? "present" : "missing",
+  });
+
+  // Create a JSON blob from the content
+  const jsonBlob = new Blob([JSON.stringify(content, null, 2)], {
+    type: "application/json",
+  });
+
+  // Create FormData with file and filename
+  const formData = new FormData();
+  formData.append("file", jsonBlob, `${filename}.json`);
+  formData.append("filename", filename);
+
+  console.log("FormData created:", { filename, blobSize: jsonBlob.size });
+
+  const response = await fetchWithAuth(
+    `/notes`,
+    {
+      method: "PUT",
+      body: formData,
+    },
+    token
+  );
+
+  console.log("API response status:", response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API error response:", errorText);
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+
+  console.log("saveNote completed successfully");
+}
+
+export async function createNote(
+  filename: string,
+  content: any,
+  token: string
+): Promise<void> {
+  // Create a JSON blob from the content
+  const jsonBlob = new Blob([JSON.stringify(content, null, 2)], {
+    type: "application/json",
+  });
+
+  // Create FormData with file and filename
+  const formData = new FormData();
+  formData.append("file", jsonBlob, `${filename}.json`);
+  formData.append("filename", filename);
+
+  const response = await fetchWithAuth(
+    `/notes`,
+    {
+      method: "POST",
+      body: formData,
+    },
+    token
+  );
+
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
 }
 
 // Custom error class for API errors

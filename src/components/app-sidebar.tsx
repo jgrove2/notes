@@ -13,8 +13,9 @@ import {
 } from "./ui/sidebar";
 import { Button } from "./ui/button";
 import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
-import { FolderOpen, File, Plus } from "lucide-react";
+import { File, Plus, RefreshCw } from "lucide-react";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
+import { useEffect } from "react";
 
 export function AppSidebar() {
   const { state, open, openMobile, setOpenMobile, isMobile, toggleSidebar } =
@@ -23,19 +24,34 @@ export function AppSidebar() {
   const {
     files,
     currentFile,
-    directoryHandle,
     isLoading,
     error,
-    selectDirectory,
+    loadFileStructure,
     loadFileContent,
     createNewFile,
   } = useFileSystemState();
 
-  const handleOpenDirectory = async () => {
-    await selectDirectory();
-  };
+  const { isAuthenticated, getToken } = useKindeAuth();
 
-  const { isAuthenticated } = useKindeAuth();
+  // Load file structure when component mounts and user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const loadFiles = async () => {
+        const token = await getToken();
+        if (token) {
+          await loadFileStructure(token);
+        }
+      };
+      loadFiles();
+    }
+  }, [isAuthenticated, loadFileStructure, getToken]);
+
+  const handleRefreshFiles = async () => {
+    const token = await getToken();
+    if (token) {
+      await loadFileStructure(token);
+    }
+  };
 
   const handleFileSelect = async (fileName: string) => {
     if (files[fileName]?.content) {
@@ -43,14 +59,25 @@ export function AppSidebar() {
       useFileSystemState.getState().setCurrentFile(fileName);
     } else {
       // Load file content
-      await loadFileContent(fileName);
+      const token = await getToken();
+      if (token) {
+        await loadFileContent(fileName, token);
+      }
     }
   };
 
   const handleCreateNewFile = async () => {
-    const fileName = prompt("Enter File Name:");
+    const fileName = prompt("Enter File Name (without extension):");
     if (fileName && !files[fileName]) {
-      await createNewFile(fileName, `{}`);
+      const token = await getToken();
+      if (token) {
+        const initialContent = {
+          content: "# New Document\n\nStart writing...",
+          lastModified: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        };
+        await createNewFile(fileName, initialContent, token);
+      }
     }
   };
 
@@ -70,19 +97,19 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <div className="space-y-2 p-2">
               <Button
-                onClick={handleOpenDirectory}
+                onClick={handleRefreshFiles}
                 disabled={isLoading || !isAuthenticated}
                 className="w-full justify-start"
                 variant="outline"
               >
-                <FolderOpen className="w-4 h-4 mr-2" />
-                {directoryHandle ? "Change Directory" : "Open Directory"}
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Files
               </Button>
 
-              {directoryHandle && (
+              {isAuthenticated && (
                 <Button
                   onClick={handleCreateNewFile}
-                  disabled={isLoading || !isAuthenticated}
+                  disabled={isLoading}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -129,9 +156,14 @@ export function AppSidebar() {
         {isLoading && (
           <div className="text-sm text-muted-foreground">Loading...</div>
         )}
-        {directoryHandle && (
+        {!isAuthenticated && (
           <div className="text-xs text-muted-foreground">
-            Working in: {directoryHandle.name}
+            Please login to access your notes
+          </div>
+        )}
+        {isAuthenticated && Object.keys(files).length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            {Object.keys(files).length} notes available
           </div>
         )}
       </SidebarFooter>
