@@ -4,6 +4,18 @@ import { MainNavigation } from "./components/main-navigation";
 import { ThemeProvider } from "./util/theme/useTheme";
 import { KindeProvider, useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { EditorContainer } from "./components/ui/editor";
+import { EditorKit } from "./components/editor/editor-kit";
+import { usePlateEditor } from "platejs/react";
+import { useEditorState } from "./util/editor/editorState";
+
+import { useEffect, useState } from "react";
+import remarkMath from "remark-math";
+import remarkEmoji from "remark-emoji";
+import remarkGfm from "remark-gfm";
+import { MarkdownPlugin, remarkMdx, remarkMention } from "@platejs/markdown";
+import { Plate } from "platejs/react";
+import { serializeHtml } from "platejs";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -15,7 +27,13 @@ const queryClient = new QueryClient({
   },
 });
 
-function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+function AuthenticatedLayout({
+  children,
+  setGettingHtml,
+}: {
+  children: React.ReactNode;
+  setGettingHtml: (gettingHtml: boolean) => void;
+}) {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
   // Show loading state while checking authentication
@@ -40,7 +58,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <div className="flex-1 flex flex-col w-full overflow-hidden">
-        <MainNavigation />
+        <MainNavigation setGettingHtml={setGettingHtml} />
         <main
           className="overflow-hidden"
           style={{ height: "calc(100vh - 4rem)" }}
@@ -57,6 +75,38 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { editor, setEditor } = useEditorState();
+  const editorComponent = usePlateEditor({
+    plugins: EditorKit,
+    value: (editor) =>
+      editor.getApi(MarkdownPlugin).markdown.deserialize("", {
+        remarkPlugins: [
+          remarkMath,
+          remarkGfm,
+          remarkMdx,
+          remarkMention,
+          remarkEmoji as any,
+        ],
+      }),
+  });
+  const [html, setHtml] = useState<string>("");
+  const [gettingHtml, setGettingHtml] = useState<boolean>(false);
+  useEffect(() => {
+    setEditor(editorComponent as any);
+  }, [editor]);
+
+  useEffect(() => {
+    console.log("editor", editor);
+    if (editor && gettingHtml) {
+      console.log(editor);
+      serializeHtml(editorComponent).then((html) => {
+        console.log("Editor html:", html);
+        setHtml(html);
+        setGettingHtml(false);
+      });
+    }
+  }, [editor, gettingHtml]);
+
   return (
     <KindeProvider
       clientId={import.meta.env.VITE_KINDE_CLIENT_ID}
@@ -66,7 +116,13 @@ export default function MainLayout({
     >
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <AuthenticatedLayout>{children}</AuthenticatedLayout>
+          <Plate editor={editor as any}>
+            <EditorContainer>
+              <AuthenticatedLayout setGettingHtml={setGettingHtml}>
+                {children}
+              </AuthenticatedLayout>
+            </EditorContainer>
+          </Plate>
         </ThemeProvider>
       </QueryClientProvider>
     </KindeProvider>

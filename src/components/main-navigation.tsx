@@ -16,72 +16,43 @@ import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "~/util/theme/useTheme";
 import { Button } from "./ui/button";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
-import { useEditor } from "./editor/editor-kit";
-import { useEditorState } from "~/util/editor/editorState";
 import { Save } from "lucide-react";
+import { useEditorState } from "~/util/editor/editorState";
 
-export function MainNavigation() {
+export function MainNavigation({
+  setGettingHtml,
+}: {
+  setGettingHtml: (gettingHtml: boolean) => void;
+}) {
   const { login, logout, isAuthenticated, getToken } = useKindeAuth();
-  const { createNewFile, saveFile, currentFile, files, lastSaved } =
-    useFileSystemState();
-  const { markdownText } = useEditorState();
+  const { createNewFile, saveFile, currentFile, files } = useFileSystemState();
   const { theme, setTheme } = useTheme();
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
-
-  // Track changes by comparing current content with last saved content
-  React.useEffect(() => {
-    if (currentFile && files[currentFile]?.content) {
-      const savedContent = files[currentFile].content?.content || "";
-      const currentContent = markdownText;
-      setHasUnsavedChanges(savedContent !== currentContent);
-    } else {
-      setHasUnsavedChanges(false);
-    }
-  }, [currentFile, files, markdownText]);
 
   const handleNewFile = async () => {
     const fileName = prompt("Enter file name (without extension):");
     if (fileName && !files[fileName]) {
       const token = await getToken();
       if (token) {
-        const initialContent = {
-          content: "# New Document\n\nStart writing...",
-          lastModified: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        };
-        await createNewFile(fileName, initialContent, token);
+        await createNewFile(fileName, token);
       }
     }
   };
 
   const handleSaveFile = async () => {
-    console.log("Save button clicked");
-    console.log("Current file:", currentFile);
-    console.log("Has unsaved changes:", hasUnsavedChanges);
-    console.log("Current markdown text:", markdownText);
-
-    if (currentFile && hasUnsavedChanges) {
-      console.log("Attempting to save file:", currentFile);
+    if (currentFile) {
       const token = await getToken();
-      if (token) {
-        const contentToSave = {
-          content: markdownText,
-          lastModified: new Date().toISOString(),
-        };
-        console.log("Content to save:", contentToSave);
-        await saveFile(currentFile, contentToSave, token);
-        setHasUnsavedChanges(false);
-        console.log("Save completed");
-      } else {
-        console.log("No token available");
+      setGettingHtml(true);
+      try {
+        if (token) {
+          let { getHtmlText } = useEditorState.getState();
+          const html = await getHtmlText();
+          console.log("Saving file:", currentFile, html);
+          await saveFile(currentFile, html, token);
+        }
+      } finally {
+        setGettingHtml(false);
       }
-    } else {
-      console.log(
-        "Save conditions not met - currentFile:",
-        currentFile,
-        "hasUnsavedChanges:",
-        hasUnsavedChanges
-      );
     }
   };
 
@@ -124,7 +95,7 @@ export function MainNavigation() {
               <NavigationMenuItem>
                 <Button
                   onClick={handleSaveFile}
-                  disabled={!hasUnsavedChanges}
+                  disabled={false}
                   variant="ghost"
                   size="sm"
                   className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"

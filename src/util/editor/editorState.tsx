@@ -1,31 +1,50 @@
-import { marked, Marked } from 'marked';
-import {create} from 'zustand';
-import { formatMarkdownToHtml } from '../markdown/markdown';
+import { create } from "zustand";
+import { createSlateEditor, serializeHtml } from "platejs";
+import { BaseEditorKit } from "~/components/editor/editor-base-kit";
+import { EditorStatic } from "~/components/ui/editor-static";
 
 interface EditorState {
-    lineNumber: number;
-    cursorPosition: number;
-    htmlText: string;
-    markdownText: string;
-    setMarkdownText: (text: string) => void;
-    setHtmlText: (text: string) => void;
-    setLineNumber: (line: number) => void;
-    setCursorPosition: (position: number) => void;
-    setEditorState: (line: number, position: number) => void;
-    formatMarkdownToHtml: (markdown: string) => Promise<string>;
+  editor: any | null;
+  getHtmlText: () => Promise<string>;
+  setEditor: (editor: any) => void;
+  loadHtmlToEditor: (html: string) => void;
 }
 
-export const useEditorState = create<EditorState>((set) => ({
-    lineNumber: 1,
-    cursorPosition: 0,
-    markdownText: '',
-    htmlText: '',
-    setMarkdownText: (text: string) => set({ markdownText: text }),
-    setHtmlText: (text: string) => set({ htmlText: text }),
-    setLineNumber: (line: number) => set({ lineNumber: line }),
-    setCursorPosition: (position: number) => set({ cursorPosition: position }),
-    setEditorState: (line: number, position: number) => set({ lineNumber: line, cursorPosition: position }),
-    formatMarkdownToHtml: async (markdown: string) => {
-        return await formatMarkdownToHtml(markdown);
+export const useEditorState = create<EditorState>((set, get) => ({
+  editor: null,
+  setEditor: (editor: any) => {
+    set({ editor: editor });
+  },
+  getHtmlText: async () => {
+    const { editor } = get();
+    if (!editor) return "";
+    try {
+      const editorStatic = createSlateEditor({
+        plugins: BaseEditorKit,
+        value: editor.children,
+      });
+      const html = await serializeHtml(editorStatic, {
+        editorComponent: EditorStatic,
+      });
+      return html;
+    } catch (error) {
+      console.error("Error serializing HTML:", error);
+      return "";
     }
+  },
+  loadHtmlToEditor: (html: string) => {
+    const { editor } = get();
+    if (!editor) {
+      return;
+    }
+    try {
+      console.log("html", html);
+      const slateValue = editor.api.html.deserialize(html);
+      editor.tf.setValue(slateValue as any);
+      console.log("slateValue", slateValue);
+    } catch (error) {
+      console.error("Error loading HTML to editor:", error);
+      throw error;
+    }
+  },
 }));

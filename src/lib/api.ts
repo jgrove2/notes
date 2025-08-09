@@ -1,3 +1,5 @@
+import { useEditorState } from "~/util/editor/editorState";
+
 const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
 // const API_BASE_URL = "http://localhost:8080";
 
@@ -137,7 +139,10 @@ export async function fetchFileStructure(
   return response.json();
 }
 
-export async function fetchNote(filename: string, token: string): Promise<any> {
+export async function fetchNote(
+  filename: string,
+  token: string
+): Promise<string> {
   const response = await fetchWithAuth(`/notes/${filename}`, {}, token);
 
   if (!response.ok) {
@@ -147,12 +152,13 @@ export async function fetchNote(filename: string, token: string): Promise<any> {
     );
   }
 
-  return response.json();
+  // File content is returned as text
+  return response.text();
 }
 
 export async function saveNote(
   filename: string,
-  content: any,
+  content: string,
   token: string
 ): Promise<void> {
   console.log("saveNote API called with:", {
@@ -161,17 +167,17 @@ export async function saveNote(
     token: token ? "present" : "missing",
   });
 
-  // Create a JSON blob from the content
-  const jsonBlob = new Blob([JSON.stringify(content, null, 2)], {
-    type: "application/json",
+  // Create an HTML blob from the content
+  const htmlBlob = new Blob([content], {
+    type: "text/html",
   });
 
   // Create FormData with file and filename
   const formData = new FormData();
-  formData.append("file", jsonBlob, `${filename}.json`);
+  formData.append("file", htmlBlob, `${filename}.html`);
   formData.append("filename", filename);
 
-  console.log("FormData created:", { filename, blobSize: jsonBlob.size });
+  console.log("FormData created:", { filename, blobSize: htmlBlob.size });
 
   const response = await fetchWithAuth(
     `/notes`,
@@ -198,18 +204,26 @@ export async function saveNote(
 
 export async function createNote(
   filename: string,
-  content: any,
+  content: string,
   token: string
 ): Promise<void> {
-  // Create a JSON blob from the content
-  const jsonBlob = new Blob([JSON.stringify(content, null, 2)], {
-    type: "application/json",
+  console.log("createNote API called with:", {
+    filename,
+    content,
+    token: token ? "present" : "missing",
+  });
+
+  // Create an HTML blob from the content
+  const htmlBlob = new Blob([content], {
+    type: "text/html",
   });
 
   // Create FormData with file and filename
   const formData = new FormData();
-  formData.append("file", jsonBlob, `${filename}.json`);
+  formData.append("file", htmlBlob, `${filename}.html`);
   formData.append("filename", filename);
+
+  console.log("FormData created:", { filename, blobSize: htmlBlob.size });
 
   const response = await fetchWithAuth(
     `/notes`,
@@ -220,12 +234,18 @@ export async function createNote(
     token
   );
 
+  console.log("API response status:", response.status);
+
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API error response:", errorText);
     throw new ApiError(
       `HTTP error! status: ${response.status}`,
       response.status
     );
   }
+
+  console.log("createNote completed successfully");
 }
 
 // Custom error class for API errors

@@ -16,10 +16,12 @@ import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
 import { File, Plus, RefreshCw } from "lucide-react";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { useEffect } from "react";
+import { useEditorState } from "~/util/editor/editorState";
+import { Editor } from "./ui/editor";
+import { PlateEditor } from "platejs/react";
 
 export function AppSidebar() {
-  const { state, open, openMobile, setOpenMobile, isMobile, toggleSidebar } =
-    useSidebar();
+  const { isMobile } = useSidebar();
 
   const {
     files,
@@ -54,14 +56,36 @@ export function AppSidebar() {
   };
 
   const handleFileSelect = async (fileName: string) => {
-    if (files[fileName]?.content) {
-      // File content already loaded
-      useFileSystemState.getState().setCurrentFile(fileName);
-    } else {
-      // Load file content
-      const token = await getToken();
-      if (token) {
-        await loadFileContent(fileName, token);
+    const token = await getToken();
+    if (token) {
+      const content = await loadFileContent(fileName, token);
+      const editor = useEditorState.getState().editor;
+      if (editor) {
+        try {
+          let cleanedHtml = content ?? "";
+          if (
+            typeof cleanedHtml === "string" &&
+            /<\s*html\b|<\s*body\b/i.test(cleanedHtml)
+          ) {
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(cleanedHtml, "text/html");
+              cleanedHtml = doc.body ? doc.body.innerHTML : cleanedHtml;
+            } catch (_e) {
+              // keep original content on parse failure
+            }
+          }
+          cleanedHtml =
+            typeof cleanedHtml === "string" ? cleanedHtml.trim() : "";
+          console.log("cleanedHtml", cleanedHtml);
+
+          const slateValue = (editor as PlateEditor).api.html.deserialize({
+            element: cleanedHtml,
+          });
+          editor.tf.setValue(slateValue as any);
+        } catch (e) {
+          console.error("Failed to deserialize HTML into editor:", e);
+        }
       }
     }
   };
@@ -71,12 +95,15 @@ export function AppSidebar() {
     if (fileName && !files[fileName]) {
       const token = await getToken();
       if (token) {
-        const initialContent = {
-          content: "# New Document\n\nStart writing...",
-          lastModified: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        };
+        const initialContent = "<h1>New Document</h1><p>Start writing...</p>";
         await createNewFile(fileName, initialContent, token);
+        const { loadHtmlToEditor, editor } = useEditorState.getState();
+        if (editor) {
+          const slateValue = editor.api.html.deserialize(initialContent);
+          console.log("slateValue", slateValue);
+          editor.tf.setValue(slateValue as any);
+          console.log(initialContent);
+        }
       }
     }
   };

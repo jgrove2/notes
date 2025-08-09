@@ -14,20 +14,17 @@ export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
   const [currentEdit, setCurrentEdit] = useState<string>("");
   const theme = useComputedTheme();
 
-  const { setMarkdownText } = useEditorState();
+  const { editor } = useEditorState();
 
   const { files, currentFile } = useFileSystemState();
-
-  const editor = useEditor({});
 
   // Load file content when currentFile changes
   useEffect(() => {
     if (currentFile && files[currentFile]?.content) {
       const content = files[currentFile].content;
-      setMarkdownText(content);
       setCurrentEdit(content);
     }
-  }, [currentFile, files, setMarkdownText]);
+  }, [currentFile, files]);
 
   function handleInput(e: string) {
     // Get the text content (not innerHTML) to avoid HTML issues

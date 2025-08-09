@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { fetchFileStructure, fetchNote, saveNote, createNote } from "~/lib/api";
-import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
+import { useEditorState } from "~/util/editor/editorState";
 
 interface NoteItem {
   name: string;
-  content?: any;
+  content?: string;
 }
 
 interface useFileSystemState {
@@ -16,11 +16,11 @@ interface useFileSystemState {
   setFiles: (files: Record<string, NoteItem>) => void;
   setCurrentFile: (filePath: string) => void;
   loadFileStructure: (token: string) => Promise<void>;
-  loadFileContent: (fileName: string, token: string) => Promise<void>;
-  saveFile: (fileName: string, content: any, token: string) => Promise<void>;
+  loadFileContent: (fileName: string, token: string) => Promise<string>;
+  saveFile: (fileName: string, content: string, token: string) => Promise<void>;
   createNewFile: (
     fileName: string,
-    content?: any,
+    content?: string,
     token?: string
   ) => Promise<void>;
 }
@@ -65,13 +65,18 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
     }
   },
 
-  loadFileContent: async (fileName: string, token: string) => {
+  loadFileContent: async (fileName: string, token: string): Promise<string> => {
     try {
+      console.log("loadFileContent called with:", {
+        fileName,
+        token: token ? "present" : "missing",
+      });
       set({ isLoading: true, error: null });
 
       const content = await fetchNote(fileName, token);
+      console.log("Loaded HTML content:", content);
 
-      // Update the file with content
+      // Store the HTML content in the files state
       set((state) => ({
         files: {
           ...state.files,
@@ -83,16 +88,19 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
         currentFile: fileName,
         isLoading: false,
       }));
+
+      return content;
     } catch (error) {
       console.error("Error loading file:", error);
       set({
         isLoading: false,
         error: error instanceof Error ? error.message : "Failed to load file",
       });
+      return "";
     }
   },
 
-  saveFile: async (fileName: string, content: any, token: string) => {
+  saveFile: async (fileName: string, content: string, token: string) => {
     try {
       console.log("saveFile called with:", {
         fileName,
@@ -121,7 +129,7 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
 
   createNewFile: async (
     fileName: string,
-    content: any = {},
+    content: string = "<h1>New Document</h1><p>Start writing...</p>",
     token?: string
   ) => {
     try {
