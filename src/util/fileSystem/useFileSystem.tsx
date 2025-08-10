@@ -7,8 +7,14 @@ interface NoteItem {
   content?: string;
 }
 
+// Recursive file structure type
+export interface FileStructureNode {
+  [name: string]: null | FileStructureNode;
+}
+
 interface useFileSystemState {
-  files: Record<string, NoteItem>;
+  files: Record<string, NoteItem>; // keyed by full path, e.g., "src/NotesApp"
+  fileTree: FileStructureNode | {};
   currentFile: string;
   isLoading: boolean;
   error: string | null;
@@ -25,8 +31,22 @@ interface useFileSystemState {
   ) => Promise<void>;
 }
 
+function collectFiles(structure: FileStructureNode, prefix = ""): string[] {
+  const result: string[] = [];
+  for (const [entryName, node] of Object.entries(structure)) {
+    const fullPath = prefix ? `${prefix}/${entryName}` : entryName;
+    if (node === null) {
+      result.push(fullPath);
+    } else if (node && typeof node === "object") {
+      result.push(...collectFiles(node, fullPath));
+    }
+  }
+  return result;
+}
+
 export const useFileSystemState = create<useFileSystemState>((set, get) => ({
   files: {},
+  fileTree: {},
   currentFile: "",
   isLoading: false,
   error: null,
@@ -40,16 +60,18 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
 
       const response = await fetchFileStructure(token);
 
-      // Convert the file structure to our internal format
+      const tree = response.fileStructure as FileStructureNode;
+
+      // Flatten the structure to build our files map keyed by full path
+      const paths = collectFiles(tree);
       const files: Record<string, NoteItem> = {};
-      Object.keys(response.fileStructure).forEach((filename) => {
-        files[filename] = {
-          name: filename,
-        };
+      paths.forEach((fullPath) => {
+        files[fullPath] = { name: fullPath };
       });
 
       set({
         files,
+        fileTree: tree,
         isLoading: false,
         error: null,
       });

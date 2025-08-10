@@ -1,7 +1,7 @@
 import { useEditorState } from "~/util/editor/editorState";
 
-const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
-// const API_BASE_URL = "http://localhost:8080";
+// const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
+const API_BASE_URL = "http://localhost:8080";
 
 export interface UserProfile {
   userId: number;
@@ -12,6 +12,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   kindeUserId: string;
+  maxStorage?: number; // bytes
 }
 
 export interface CreateProfileRequest {
@@ -143,7 +144,11 @@ export async function fetchNote(
   filename: string,
   token: string
 ): Promise<string> {
-  const response = await fetchWithAuth(`/notes/${filename}`, {}, token);
+  const response = await fetchWithAuth(
+    `/notes/content?filename=${encodeURIComponent(filename)}`,
+    {},
+    token
+  );
 
   if (!response.ok) {
     throw new ApiError(
@@ -152,7 +157,7 @@ export async function fetchNote(
     );
   }
 
-  // File content is returned as text
+  // File content is returned as text/html
   return response.text();
 }
 
@@ -246,6 +251,121 @@ export async function createNote(
   }
 
   console.log("createNote completed successfully");
+}
+
+export async function listNotes(token: string): Promise<string[]> {
+  const response = await fetchWithAuth(`/notes`, {}, token);
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+  return response.json();
+}
+
+export async function fetchNoteInfo(
+  filename: string,
+  token: string
+): Promise<any> {
+  const response = await fetchWithAuth(
+    `/notes/info?filename=${encodeURIComponent(filename)}`,
+    {},
+    token
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+  return response.json();
+}
+
+export async function deleteNote(
+  filename: string,
+  token: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/notes?filename=${encodeURIComponent(filename)}`,
+    { method: "DELETE" },
+    token
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new ApiError(
+      text || `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+}
+
+export async function renameNote(
+  oldFilename: string,
+  newFilename: string,
+  token: string
+): Promise<any> {
+  const response = await fetchWithAuth(
+    `/notes/rename?oldFilename=${encodeURIComponent(oldFilename)}&newFilename=${encodeURIComponent(newFilename)}`,
+    { method: "POST" },
+    token
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new ApiError(
+      text || `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+  return response.json();
+}
+
+export async function fetchStorageSize(token: string): Promise<number> {
+  const response = await fetchWithAuth(`/notes/storage/size`, {}, token);
+  if (!response.ok) {
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status
+    );
+  }
+
+  // Try to parse JSON first, fallback to plain number text
+  try {
+    const json = await response.json();
+
+    // Prefer explicit total bytes if available
+    const totalSizeBytes = (json as any)["totalSizeBytes"];
+    if (typeof totalSizeBytes === "number") {
+      return totalSizeBytes;
+    }
+
+    // Check nested sizeInfo.bytes
+    const sizeInfo = (json as any)["sizeInfo"];
+    if (sizeInfo && typeof sizeInfo["bytes"] === "number") {
+      return sizeInfo["bytes"] as number;
+    }
+
+    const possibleKeys = [
+      "size",
+      "bytes",
+      "bytesUsed",
+      "storageBytes",
+    ] as const;
+    for (const key of possibleKeys) {
+      const value = (json as any)[key];
+      if (typeof value === "number") return value;
+      if (typeof value === "string" && !Number.isNaN(Number(value)))
+        return Number(value);
+    }
+  } catch (_e) {
+    // ignore and try text
+  }
+
+  const text = await response.text();
+  const num = Number(text);
+  if (!Number.isNaN(num)) return num;
+
+  throw new ApiError("Invalid storage size response", 500);
 }
 
 // Custom error class for API errors

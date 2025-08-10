@@ -1,86 +1,123 @@
-import { useForm } from "react-hook-form"
-import z, { set } from "zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form"
-import { Switch } from "@radix-ui/react-switch"
-import { Button } from "../ui/button"
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { useForm } from "react-hook-form";
+import z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import { Button } from "../ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useUserProfile } from "~/hooks/use-user-profile";
+import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
+import { fetchWithAuth } from "~/lib/api";
+import { useEffect, useState } from "react";
 
 const FormSchema = z.object({
-  theme: z.string().default("light").optional(),
-  useStrava: z.boolean().default(false).optional(),
-})
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
 export function SettingsPage() {
+  const { data: profile, isLoading } = useUserProfile();
+  const { getToken } = useKindeAuth();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      theme: "light",
-      useStrava: false,
+      firstName: profile?.firstName ?? "",
+      lastName: profile?.lastName ?? "",
     },
-  })
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-      console.log(data)
-    //   setTheme(data?.theme === "dark" ? "dark" : "light");
-    //   setIncludeStravaDetails(data?.useStrava === undefined ? false : data.useStrava);
+  });
+
+  // Update form when profile loads
+  useEffect(() => {
+    if (profile) {
+      form.reset({ firstName: profile.firstName, lastName: profile.lastName });
+    }
+  }, [profile, form]);
+
+  async function onSubmit(values: z.infer<typeof FormSchema>) {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("No access token available");
+      const res = await fetchWithAuth(
+        "/user/profile",
+        {
+          method: "PUT",
+          body: JSON.stringify(values),
+        },
+        token
+      );
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+      setSuccess("Profile updated");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full max-w-md space-y-6 p-6"
+      >
         <div>
-          <h3 className="mb-4 text-lg font-medium">Email Notifications</h3>
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="theme"
-              render={({ field }) => {
-                  return (
-                      <FormItem>
-                          <div className="space-y-0.5">
-                              <FormLabel>Dark Theme or Light Theme</FormLabel>
-                              <FormDescription>
-                                  Choose between dark or light theme for the application.
-                              </FormDescription>
-                          </div>
-                          <Select onValueChange={field.onChange} defaultValue={field.value ? "dark" : "light"}>
-                              <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Select Theme" />
-                                  </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                  <SelectItem value="dark">dark</SelectItem>
-                                  <SelectItem value="ligth">light</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      </FormItem>
-                  )
-              }}
-            />
-            <FormField
-              control={form.control}
-              name="useStrava"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="space-y-0.5">
-                    <FormLabel>Strava Integration</FormLabel>
-                    <FormDescription>
-                        Enable or disable Strava integration for activity tracking.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      aria-readonly
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+          <h3 className="mb-2 text-xl font-semibold flex items-center gap-2">
+            Profile Settings
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Update your name information.
+          </p>
         </div>
-        <Button type="submit">Submit</Button>
+
+        <FormField
+          control={form.control}
+          name="firstName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name</FormLabel>
+              <FormControl>
+                <input
+                  {...field}
+                  className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                  placeholder="First name"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lastName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <input
+                  {...field}
+                  className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                  placeholder="Last name"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {error && <div className="text-sm text-red-600">{error}</div>}
+        {success && <div className="text-sm text-green-600">{success}</div>}
+
+        <Button type="submit" disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
       </form>
     </Form>
-  )
+  );
 }

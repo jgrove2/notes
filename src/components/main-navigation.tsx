@@ -16,7 +16,7 @@ import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "~/util/theme/useTheme";
 import { Button } from "./ui/button";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
-import { Save } from "lucide-react";
+import { Save, Cog as SettingsIcon } from "lucide-react";
 import { useEditorState } from "~/util/editor/editorState";
 
 export function MainNavigation({
@@ -63,70 +63,64 @@ export function MainNavigation({
   return (
     <div className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-12 items-center px-4">
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <SidebarTrigger />
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/settings">
-                <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
-                  Settings
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
+        <div className="flex items-center gap-2">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <SidebarTrigger />
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link to="/settings">
+                  <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                    Settings
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <Link to="/">
-                <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
-                  Help
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Toggle
-                onClick={darkModeToggle}
-                className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-              >
-                {theme === "dark" ? <MoonIcon /> : <SunIcon />}
-              </Toggle>
-            </NavigationMenuItem>
-            {currentFile && (
               <NavigationMenuItem>
-                <Button
-                  onClick={handleSaveFile}
-                  disabled={false}
-                  variant="ghost"
-                  size="sm"
-                  className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  Save
-                </Button>
+                <Link to="/">
+                  <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                    Home
+                  </NavigationMenuLink>
+                </Link>
               </NavigationMenuItem>
-            )}
-            {isAuthenticated && (
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  onClick={handleNewFile}
-                  className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                >
-                  New File
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            )}
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                onClick={() => {
-                  isAuthenticated ? logout() : login();
-                }}
-                className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-              >
-                {isAuthenticated ? "Logout" : "Login"}
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+              {currentFile && (
+                <NavigationMenuItem>
+                  <Button
+                    onClick={handleSaveFile}
+                    disabled={false}
+                    variant="ghost"
+                    size="sm"
+                    className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    Save
+                  </Button>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-2">
+          <Toggle
+            onClick={darkModeToggle}
+            className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+          >
+            {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+          </Toggle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+            onClick={() => {
+              isAuthenticated ? logout() : login();
+            }}
+          >
+            {isAuthenticated ? "Logout" : "Login"}
+          </Button>
+        </div>
       </div>
     </div>
   );
