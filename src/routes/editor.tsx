@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PlateEditor } from "~/components/editor/plate-editor";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useUserProfile } from "~/hooks/use-user-profile";
 import { CreateProfileForm } from "~/components/create-profile-form";
 import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
@@ -18,28 +18,13 @@ function EditorPage() {
   const { currentFile, loadFileContent, saveFile } = useFileSystemState();
   const { getHtmlText } = useEditorState();
   const router = useRouter();
+  const triedRestoreRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.navigate({ to: "/login" });
     }
   }, [isAuthenticated, isLoading, router]);
-
-  // On mount, attempt to load last selected file from sessionStorage
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const stored = sessionStorage.getItem("selectedFile");
-        if (stored) {
-          const token = await getToken();
-          if (token) {
-            await loadFileContent(stored, token);
-          }
-        }
-      } catch {}
-    };
-    if (isAuthenticated) run();
-  }, [isAuthenticated, getToken, loadFileContent]);
 
   // Autosave every 10 seconds when a file is open and autosave enabled
   useEffect(() => {

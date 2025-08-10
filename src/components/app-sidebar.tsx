@@ -95,6 +95,12 @@ export function AppSidebar() {
         const token = await getToken();
         if (token) {
           await loadFileStructure(token);
+          const selectedFile = sessionStorage.getItem("selectedFile");
+          if (selectedFile && typeof selectedFile === "string") {
+            handleFileSelect(selectedFile);
+          } else {
+            router.navigate({ to: "/" });
+          }
         }
       };
       loadFiles();
@@ -115,6 +121,7 @@ export function AppSidebar() {
       try {
         const token = await getToken();
         if (!token) return;
+
         const size = await fetchStorageSize(token);
         if (!canceled) setUsedBytes(size);
       } catch (_e) {
