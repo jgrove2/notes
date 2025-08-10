@@ -60,7 +60,7 @@ function AuthenticatedLayout({
       <div className="flex-1 flex flex-col w-full overflow-hidden">
         <MainNavigation setGettingHtml={setGettingHtml} />
         <main
-          className="overflow-hidden"
+          className="overflow-auto"
           style={{ height: "calc(100vh - 4rem)" }}
         >
           {children}

@@ -13,6 +13,8 @@ export interface UserProfile {
   updatedAt: string;
   kindeUserId: string;
   maxStorage?: number; // bytes
+  autoSave?: boolean;
+  autoSaveDuration?: number; // seconds
 }
 
 export interface CreateProfileRequest {

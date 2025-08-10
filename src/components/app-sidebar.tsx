@@ -358,13 +358,13 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       onClick={() => !isRenaming && handleFileSelect(fullPath)}
                       isActive={currentFile === fullPath}
-                      className="w-full justify-start"
+                      className="w-full justify-start sm:text-sm text-xs select-none"
                     >
                       <File className="w-4 h-4 mr-2" />
                       {isRenaming ? (
                         <input
                           autoFocus
-                          className="bg-transparent border-b border-border focus:outline-none text-sm flex-1"
+                          className="bg-transparent border-b border-border focus:outline-none text-xs sm:text-sm flex-1"
                           value={renameInput}
                           onChange={(e) => setRenameInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -427,7 +427,7 @@ export function AppSidebar() {
               <button
                 type="button"
                 onClick={() => toggleFolder(fullPath)}
-                className="flex items-center w-full text-left p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
+                className="flex items-center w-full text-left p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm select-none"
               >
                 {open ? (
                   <FolderOpen className="w-4 h-4 mr-2" />
@@ -458,15 +458,16 @@ export function AppSidebar() {
         <h2 className="text-lg font-semibold">Notes</h2>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-visible">
-        <SidebarGroup>
+      <SidebarContent className="overflow-y-auto">
+        <SidebarGroup className="">
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <div className="space-y-2 p-2">
               <Button
                 onClick={async () => router.navigate({ to: "/" })}
-                className="w-full justify-start"
+                className="w-full justify-start sm:text-sm text-xs select-none"
                 variant="outline"
+                size="sm"
               >
                 <HomeIcon className="w-4 h-4 mr-2" />
                 Home
@@ -475,8 +476,9 @@ export function AppSidebar() {
               <Button
                 onClick={handleRefreshFiles}
                 disabled={isLoading || !isAuthenticated}
-                className="w-full justify-start"
+                className="w-full justify-start sm:text-sm text-xs select-none"
                 variant="outline"
+                size="sm"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh Files
@@ -486,12 +488,18 @@ export function AppSidebar() {
                 <Button
                   onClick={startCreateNew}
                   disabled={isLoading || isSubmittingNew}
-                  className="w-full justify-start"
+                  className="w-full justify-start sm:text-sm text-xs select-none"
                   variant="outline"
+                  size="sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   New File
                 </Button>
+              )}
+              {isAuthenticated && (
+                <div className="text-xs text-muted-foreground px-1">
+                  {Object.keys(files).length} notes • {usedLabel}/{maxLabel}
+                </div>
               )}
             </div>
           </SidebarGroupContent>
@@ -502,7 +510,7 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupLabel>Files</SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="max-h-[50vh] overflow-y-scroll pr-1">
+              <div className="pr-1">
                 <SidebarMenu>
                   {renderTree(fileTree as FileStructureNode)}
                   {isCreatingNew && (
@@ -573,15 +581,6 @@ export function AppSidebar() {
         {!isAuthenticated && (
           <div className="text-xs text-muted-foreground">
             Please login to access your notes
-          </div>
-        )}
-        {isAuthenticated && (
-          <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <span>{Object.keys(files).length} notes available</span>
-            <span>•</span>
-            <span>
-              {usedLabel}/{maxLabel}
-            </span>
           </div>
         )}
       </SidebarFooter>

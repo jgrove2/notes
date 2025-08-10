@@ -33,7 +33,7 @@ export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
   }
 
   return (
-    <div className={`editor`}>
+    <div className={`editor h-full overflow-auto ${className}`}>
       {currentEdit ? (
         <Editable
           editor={editor}
@@ -49,8 +49,7 @@ export const Editor: React.FC<EditorProps> = ({ className = "" }) => {
             border: "none",
             outline: "none",
             width: "100%",
-            height: "100%",
-            resize: "none",
+            minHeight: "100%",
           }}
         />
       ) : (

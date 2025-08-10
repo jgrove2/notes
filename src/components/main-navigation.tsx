@@ -16,7 +16,14 @@ import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "~/util/theme/useTheme";
 import { Button } from "./ui/button";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
-import { Save, Cog as SettingsIcon } from "lucide-react";
+import {
+  Save,
+  Cog as SettingsIcon,
+  Cloud,
+  CloudCog,
+  CloudCheck,
+  CloudAlert,
+} from "lucide-react";
 import { useEditorState } from "~/util/editor/editorState";
 
 export function MainNavigation({
@@ -25,7 +32,15 @@ export function MainNavigation({
   setGettingHtml: (gettingHtml: boolean) => void;
 }) {
   const { login, logout, isAuthenticated, getToken } = useKindeAuth();
-  const { createNewFile, saveFile, currentFile, files } = useFileSystemState();
+  const {
+    createNewFile,
+    saveFile,
+    currentFile,
+    files,
+    isSaving,
+    saveError,
+    lastSaved,
+  } = useFileSystemState();
   const { theme, setTheme } = useTheme();
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
 
@@ -58,6 +73,16 @@ export function MainNavigation({
 
   const darkModeToggle = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const SavingIcon = () => {
+    if (saveError) return <CloudAlert className="w-4 h-4 text-red-500" />;
+    if (isSaving)
+      return (
+        <CloudCog className="w-4 h-4 text-muted-foreground animate-spin-slow" />
+      );
+    if (lastSaved) return <CloudCheck className="w-4 h-4 text-green-600" />;
+    return <Cloud className="w-4 h-4 text-muted-foreground" />;
   };
 
   return (
@@ -103,7 +128,11 @@ export function MainNavigation({
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground select-none">
+            <SavingIcon />
+            <span>Auto-save enabled</span>
+          </div>
           <Toggle
             onClick={darkModeToggle}
             className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"

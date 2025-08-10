@@ -17,7 +17,9 @@ interface useFileSystemState {
   fileTree: FileStructureNode | {};
   currentFile: string;
   isLoading: boolean;
+  isSaving: boolean;
   error: string | null;
+  saveError: string | null;
   lastSaved: Date | null;
   setFiles: (files: Record<string, NoteItem>) => void;
   setCurrentFile: (filePath: string) => void;
@@ -49,7 +51,9 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
   fileTree: {},
   currentFile: "",
   isLoading: false,
+  isSaving: false,
   error: null,
+  saveError: null,
   lastSaved: null,
   setFiles: (files) => set({ files }),
   setCurrentFile: (filePath) => set({ currentFile: filePath }),
@@ -129,7 +133,8 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
         content,
         token: token ? "present" : "missing",
       });
-      set({ isLoading: true, error: null });
+      // Do not set isLoading for saves
+      set({ isSaving: true, saveError: null });
 
       await saveNote(fileName, content, token);
       console.log("saveNote completed successfully");
@@ -137,14 +142,16 @@ export const useFileSystemState = create<useFileSystemState>((set, get) => ({
       // Update the last saved timestamp without reloading the content
       set({
         lastSaved: new Date(),
-        isLoading: false,
+        isSaving: false,
+        saveError: null,
       });
       console.log("File system state updated");
     } catch (error) {
       console.error("Error saving file:", error);
       set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : "Failed to save file",
+        isSaving: false,
+        saveError:
+          error instanceof Error ? error.message : "Failed to save file",
       });
     }
   },
