@@ -8,6 +8,7 @@ import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
 import { fetchStorageSize } from "~/lib/api";
 import { formatBytes } from "~/lib/utils";
 import { Progress } from "~/components/ui/progress";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -61,7 +62,7 @@ function Home() {
 
   const noteCount = useMemo(() => Object.keys(files).length, [files]);
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />;
   }
 
   if (!isAuthenticated) {

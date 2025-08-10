@@ -16,6 +16,7 @@ import remarkGfm from "remark-gfm";
 import { MarkdownPlugin, remarkMdx, remarkMention } from "@platejs/markdown";
 import { Plate } from "platejs/react";
 import { serializeHtml } from "platejs";
+import { Loader2 } from "lucide-react";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -41,8 +42,7 @@ function AuthenticatedLayout({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       </div>
     );

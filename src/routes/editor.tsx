@@ -7,6 +7,7 @@ import { useUserProfile } from "~/hooks/use-user-profile";
 import { CreateProfileForm } from "~/components/create-profile-form";
 import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
 import { useEditorState } from "~/util/editor/editorState";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/editor")({
   component: EditorPage,
@@ -63,7 +64,11 @@ function EditorPage() {
   ]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
