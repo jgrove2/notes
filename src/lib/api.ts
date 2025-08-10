@@ -1,7 +1,7 @@
 import { useEditorState } from "~/util/editor/editorState";
 
-// const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
+// const API_BASE_URL = "http://localhost:8080";
 
 export interface UserProfile {
   userId: number;
