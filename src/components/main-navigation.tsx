@@ -101,14 +101,6 @@ export function MainNavigation({
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link to="/">
-                  <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
-                    Home
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
               {currentFile && (
                 <NavigationMenuItem>
                   <Button
@@ -131,7 +123,7 @@ export function MainNavigation({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 text-xs text-muted-foreground select-none">
             <SavingIcon />
-            <span>Auto-save enabled</span>
+            <span className="hidden sm:inline">Auto-save enabled</span>
           </div>
           <Toggle
             onClick={darkModeToggle}

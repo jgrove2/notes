@@ -106,7 +106,7 @@ export function SettingsPage() {
               <FormControl>
                 <input
                   {...field}
-                  className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                  className="w-full rounded-md border px-3 py-2 text-base md:text-sm bg-background"
                   placeholder="First name"
                 />
               </FormControl>
@@ -123,7 +123,7 @@ export function SettingsPage() {
               <FormControl>
                 <input
                   {...field}
-                  className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                  className="w-full rounded-md border px-3 py-2 text-base md:text-sm bg-background"
                   placeholder="Last name"
                 />
               </FormControl>
@@ -164,7 +164,7 @@ export function SettingsPage() {
                   step={1}
                   value={field.value ?? 30}
                   onChange={(e) => field.onChange(Number(e.target.value))}
-                  className="w-32 rounded-md border px-3 py-2 text-sm bg-background"
+                  className="w-32 rounded-md border px-3 py-2 text-base md:text-sm bg-background"
                 />
               </FormControl>
             </FormItem>

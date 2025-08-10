@@ -110,10 +110,14 @@ export function useCreateUserProfile() {
         throw new ApiError("No access token available", 401);
       }
 
-      const response = await fetchWithAuth("/user/profile", {
-        method: "POST",
-        body: JSON.stringify(profileData),
-      });
+      const response = await fetchWithAuth(
+        "/user/profile",
+        {
+          method: "POST",
+          body: JSON.stringify(profileData),
+        },
+        token
+      );
 
       if (!response.ok) {
         throw new ApiError(
