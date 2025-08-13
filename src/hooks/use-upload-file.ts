@@ -1,8 +1,6 @@
 import React from "react";
 import { toast } from "sonner";
-import { useState } from "react";
 import { z } from "zod";
-import type { UploadRouter } from "~/api/uploadthing/route";
 
 import { generateReactHelpers } from "@uploadthing/react";
 
@@ -37,27 +35,26 @@ export function getErrorMessage(err: unknown) {
   }
 }
 
-export const { uploadFiles, useUploadThing } =
-  generateReactHelpers<UploadRouter>({
-    url: "/api/uploadthing",
-    fetch: async (input, init) => {
-      try {
-        console.info("[UploadThing] fetch →", input, init?.method);
-        const res = await fetch(input, init);
-        if (!res.ok) {
-          console.error(
-            "[UploadThing] fetch error status",
-            res.status,
-            await res.text()
-          );
-        }
-        return res;
-      } catch (e) {
-        console.error("[UploadThing] fetch threw", e);
-        throw e;
+export const { uploadFiles, useUploadThing } = generateReactHelpers({
+  url: "/api/uploadthing",
+  fetch: async (input, init) => {
+    try {
+      console.info("[UploadThing] fetch →", input, init?.method);
+      const res = await fetch(input, init);
+      if (!res.ok) {
+        console.error(
+          "[UploadThing] fetch error status",
+          res.status,
+          await res.text()
+        );
       }
-    },
-  });
+      return res;
+    } catch (e) {
+      console.error("[UploadThing] fetch threw", e);
+      throw e;
+    }
+  },
+});
 
 export function useUploadFile({
   onUploadComplete,
