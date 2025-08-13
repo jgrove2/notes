@@ -1,32 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlateEditor } from "~/components/editor/plate-editor";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
-import { useUserProfile } from "~/hooks/use-user-profile";
-import { CreateProfileForm } from "~/components/create-profile-form";
-import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
-import { useEditorState } from "~/util/editor/editorState";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import TiptapEditor from "~/components/editor/TipTapEditor";
+import { useUserProfile } from "~/hooks/use-user-profile";
+import { useFileSystemState } from "~/util/fileSystem/useFileSystem";
+import { CreateProfileForm } from "~/components/create-profile-form";
+import { useCurrentEditor } from "@tiptap/react";
 
 export const Route = createFileRoute("/editor")({
-  component: EditorPage,
+  component: TiptapPage,
 });
 
-function EditorPage() {
+function TiptapPage() {
   const { isAuthenticated, isLoading, getToken } = useKindeAuth();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { currentFile, loadFileContent, saveFile } = useFileSystemState();
-  const { getHtmlText } = useEditorState();
+  const { editor } = useCurrentEditor();
   const router = useRouter();
-  const triedRestoreRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.navigate({ to: "/login" });
     }
   }, [isAuthenticated, isLoading, router]);
-
   // Autosave every 10 seconds when a file is open and autosave enabled
   useEffect(() => {
     if (!isAuthenticated || !currentFile || profile?.autoSave === false) return;
@@ -36,8 +34,9 @@ function EditorPage() {
       try {
         const token = await getToken();
         if (!token) return;
-        const html = await getHtmlText();
+        const html = editor?.getHTML();
         if (cancelled) return;
+        if (!html) throw new Error("No HTML content");
         await saveFile(currentFile, html, token);
       } catch (e) {
         console.error("Autosave failed:", e);
@@ -59,10 +58,9 @@ function EditorPage() {
     profile?.autoSave,
     profile?.autoSaveDuration,
     getToken,
-    getHtmlText,
     saveFile,
+    editor,
   ]);
-
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -83,5 +81,5 @@ function EditorPage() {
     return <CreateProfileForm />;
   }
 
-  return <PlateEditor />;
+  return <TiptapEditor />;
 }

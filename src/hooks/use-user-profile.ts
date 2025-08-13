@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import {
-  fetchUserProfile,
-  createUserProfile,
   UserProfile,
   CreateProfileRequest,
   ApiError,
@@ -14,10 +12,8 @@ export function useUserProfile() {
   return useQuery<UserProfile, ApiError>({
     queryKey: ["user-profile"],
     queryFn: async () => {
-      console.log("fetching user profile");
       const token = await getToken();
       const response = await fetchWithAuth("/user/profile", {}, token);
-      console.log("response", response);
       if (response.status === 404) {
         throw new ApiError("User profile not found", 404);
       }

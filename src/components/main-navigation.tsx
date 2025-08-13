@@ -24,14 +24,12 @@ import {
   CloudCheck,
   CloudAlert,
 } from "lucide-react";
-import { useEditorState } from "~/util/editor/editorState";
+import { ThemeToggle } from "./editor/theme-toggle";
+import { useCurrentEditor } from "@tiptap/react";
 
-export function MainNavigation({
-  setGettingHtml,
-}: {
-  setGettingHtml: (gettingHtml: boolean) => void;
-}) {
+export function MainNavigation() {
   const { login, logout, isAuthenticated, getToken } = useKindeAuth();
+  const { editor } = useCurrentEditor();
   const {
     createNewFile,
     saveFile,
@@ -57,16 +55,16 @@ export function MainNavigation({
   const handleSaveFile = async () => {
     if (currentFile) {
       const token = await getToken();
-      setGettingHtml(true);
       try {
         if (token) {
-          let { getHtmlText } = useEditorState.getState();
-          const html = await getHtmlText();
-          console.log("Saving file:", currentFile, html);
-          await saveFile(currentFile, html, token);
+          const html = editor?.getHTML();
+          if (!html) throw new Error("No HTML content");
+          if (html) {
+            await saveFile(currentFile, html, token);
+          }
         }
-      } finally {
-        setGettingHtml(false);
+      } catch (e) {
+        console.error("Save failed:", e);
       }
     }
   };
@@ -125,12 +123,7 @@ export function MainNavigation({
             <SavingIcon />
             <span className="hidden sm:inline">Auto-save enabled</span>
           </div>
-          <Toggle
-            onClick={darkModeToggle}
-            className="inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-          >
-            {theme === "dark" ? <MoonIcon /> : <SunIcon />}
-          </Toggle>
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"

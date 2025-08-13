@@ -1,22 +1,16 @@
+"use client";
+
 import { AppSidebar } from "./components/app-sidebar";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { MainNavigation } from "./components/main-navigation";
 import { ThemeProvider } from "./util/theme/useTheme";
 import { KindeProvider, useKindeAuth } from "@kinde-oss/kinde-auth-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { EditorContainer } from "./components/ui/editor";
-import { EditorKit } from "./components/editor/editor-kit";
-import { usePlateEditor } from "platejs/react";
-import { useEditorState } from "./util/editor/editorState";
+import TiptapContext from "./context/TiptapContext";
+import "./index.css";
 
-import { useEffect, useState } from "react";
-import remarkMath from "remark-math";
-import remarkEmoji from "remark-emoji";
-import remarkGfm from "remark-gfm";
-import { MarkdownPlugin, remarkMdx, remarkMention } from "@platejs/markdown";
-import { Plate } from "platejs/react";
-import { serializeHtml } from "platejs";
 import { Loader2 } from "lucide-react";
+import { AppSidebarProvider } from "./hooks/use-app-sidebar";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,13 +22,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AuthenticatedLayout({
-  children,
-  setGettingHtml,
-}: {
-  children: React.ReactNode;
-  setGettingHtml: (gettingHtml: boolean) => void;
-}) {
+function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useKindeAuth();
 
   // Show loading state while checking authentication
@@ -56,16 +44,18 @@ function AuthenticatedLayout({
   // If authenticated, render with sidebar and navigation
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
-        <MainNavigation setGettingHtml={setGettingHtml} />
-        <main
-          className="overflow-auto"
-          style={{ height: "calc(100vh - 4rem)" }}
-        >
-          {children}
-        </main>
-      </div>
+      <AppSidebarProvider>
+        <AppSidebar />
+        <div className="flex-1 flex flex-col w-full overflow-hidden">
+          <MainNavigation />
+          <main
+            className="overflow-auto"
+            style={{ height: "calc(100vh - 4rem)" }}
+          >
+            {children}
+          </main>
+        </div>
+      </AppSidebarProvider>
     </SidebarProvider>
   );
 }
@@ -75,37 +65,34 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { editor, setEditor } = useEditorState();
-  const editorComponent = usePlateEditor({
-    plugins: EditorKit,
-    value: (editor) =>
-      editor.getApi(MarkdownPlugin).markdown.deserialize("", {
-        remarkPlugins: [
-          remarkMath,
-          remarkGfm,
-          remarkMdx,
-          remarkMention,
-          remarkEmoji as any,
-        ],
-      }),
-  });
-  const [html, setHtml] = useState<string>("");
-  const [gettingHtml, setGettingHtml] = useState<boolean>(false);
-  useEffect(() => {
-    setEditor(editorComponent as any);
-  }, [editor]);
+  // const { editor, setEditor } = useEditorState();
+  // const editorComponent = usePlateEditor({
+  //   plugins: EditorKit,
+  //   value: (editor) =>
+  //     editor.getApi(MarkdownPlugin).markdown.deserialize("", {
+  //       remarkPlugins: [
+  //         remarkMath,
+  //         remarkGfm,
+  //         remarkMdx,
+  //         remarkMention,
+  //         remarkEmoji as any,
+  //       ],
+  //     }),
+  // });
+  // const [html, setHtml] = useState<string>("");
+  // const [gettingHtml, setGettingHtml] = useState<boolean>(false);
+  // useEffect(() => {
+  //   setEditor(editorComponent as any);
+  // }, [editor]);
 
-  useEffect(() => {
-    console.log("editor", editor);
-    if (editor && gettingHtml) {
-      console.log(editor);
-      serializeHtml(editorComponent).then((html) => {
-        console.log("Editor html:", html);
-        setHtml(html);
-        setGettingHtml(false);
-      });
-    }
-  }, [editor, gettingHtml]);
+  // useEffect(() => {
+  //   if (editor && gettingHtml) {
+  //     serializeHtml(editorComponent).then((html) => {
+  //       setHtml(html);
+  //       setGettingHtml(false);
+  //     });
+  //   }
+  // }, [editor, gettingHtml]);
 
   return (
     <KindeProvider
@@ -116,13 +103,9 @@ export default function MainLayout({
     >
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <Plate editor={editor as any}>
-            <EditorContainer>
-              <AuthenticatedLayout setGettingHtml={setGettingHtml}>
-                {children}
-              </AuthenticatedLayout>
-            </EditorContainer>
-          </Plate>
+          <TiptapContext>
+            <AuthenticatedLayout>{children}</AuthenticatedLayout>
+          </TiptapContext>
         </ThemeProvider>
       </QueryClientProvider>
     </KindeProvider>

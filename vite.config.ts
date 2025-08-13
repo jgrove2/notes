@@ -8,17 +8,26 @@ export default defineConfig({
     port: 3000, // Change this to your desired port
   },
   plugins: [tanstackStart({ target: "netlify" }), tsConfigPaths()],
+  resolve: {
+    alias: {
+      // Use local wrapper to avoid sourcemap issues
+    },
+  },
   ssr: {
     // Force these packages to be processed by Vite instead of Node.js
-    // This allows Vite to handle the CSS imports properly
+    // This allows Vite to handle the CSS imports properly and bundle ESM-only deps
     noExternal: [
       "@platejs/math",
       "katex",
       // Include all platejs packages since they might import CSS
       /^@platejs\/.*/,
+      // Ensure ESM-only packages are bundled for SSR
+      "use-file-picker",
+      "react-lite-youtube-embed",
+      "react-tweet",
     ],
   },
   optimizeDeps: {
-    include: ["katex"],
+    include: ["katex", "react-lite-youtube-embed", "react-tweet"],
   },
 });

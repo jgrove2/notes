@@ -1,11 +1,8 @@
-import type { FileRouter } from 'uploadthing/next';
-
-import { createUploadthing } from 'uploadthing/next';
-
+import type { FileRouter } from "uploadthing/next";
+import { createUploadthing } from "uploadthing/next";
 const f = createUploadthing();
-
 export const ourFileRouter = {
-  editorUploader: f(['image', 'text', 'blob', 'pdf', 'video', 'audio'])
+  editorUploader: f(["image", "text", "blob", "pdf", "video", "audio"])
     .middleware(() => {
       return {};
     })
@@ -19,5 +16,4 @@ export const ourFileRouter = {
       };
     }),
 } satisfies FileRouter;
-
 export type OurFileRouter = typeof ourFileRouter;

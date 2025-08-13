@@ -12,10 +12,7 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 import { Button } from "./ui/button";
-import {
-  FileStructureNode,
-  useFileSystemState,
-} from "~/util/fileSystem/useFileSystem";
+import { FileStructureNode } from "~/util/fileSystem/useFileSystem";
 import {
   File,
   Plus,
@@ -25,14 +22,7 @@ import {
   FolderOpen,
   Trash2,
 } from "lucide-react";
-import { useKindeAuth } from "@kinde-oss/kinde-auth-react";
-import { useEffect, useRef, useState } from "react";
-import { useEditorState } from "~/util/editor/editorState";
-import { Editor } from "./ui/editor";
-import { PlateEditor } from "platejs/react";
 import { useRouter } from "@tanstack/react-router";
-import { deleteNote, fetchStorageSize, renameNote } from "~/lib/api";
-import { useUserProfile } from "~/hooks/use-user-profile";
 import { formatBytes } from "~/lib/utils";
 import { Input } from "./ui/input";
 import {
@@ -44,9 +34,11 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
 } from "./ui/context-menu";
+import { useAppSidebar, AppSidebarProvider } from "~/hooks/use-app-sidebar";
 
-export function AppSidebar() {
+function AppSidebarInner() {
   const { isMobile } = useSidebar();
+  const router = useRouter();
 
   const {
     files,
@@ -54,301 +46,33 @@ export function AppSidebar() {
     currentFile,
     isLoading,
     error,
-    loadFileStructure,
-    loadFileContent,
-    createNewFile,
-    setFiles,
-    setCurrentFile,
-  } = useFileSystemState();
-
-  const { isAuthenticated, getToken } = useKindeAuth();
-  const { data: profile } = useUserProfile();
-  const [usedBytes, setUsedBytes] = useState<number | null>(null);
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [newFileName, setNewFileName] = useState("");
-  const [newFileError, setNewFileError] = useState<string | null>(null);
-  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
-  const newFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const router = useRouter();
-  const [renamingPath, setRenamingPath] = useState<string | null>(null);
-  const [renameInput, setRenameInput] = useState<string>("");
-
-  // helper: expand folders leading to a file path
-  const expandToPath = (filePath: string) => {
-    if (!filePath) return;
-    const parts = filePath.split("/");
-    if (parts.length <= 1) return;
-    const accum: Record<string, boolean> = {};
-    let prefix = "";
-    for (let i = 0; i < parts.length - 1; i++) {
-      prefix = prefix ? `${prefix}/${parts[i]}` : parts[i];
-      accum[prefix] = true;
-    }
-    setExpanded((prev) => ({ ...prev, ...accum }));
-  };
-
-  // Load file structure when component mounts and user is authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      const loadFiles = async () => {
-        const token = await getToken();
-        if (token) {
-          await loadFileStructure(token);
-          const selectedFile = sessionStorage.getItem("selectedFile");
-          if (selectedFile && typeof selectedFile === "string") {
-            handleFileSelect(selectedFile);
-          } else {
-            router.navigate({ to: "/" });
-          }
-        }
-      };
-      loadFiles();
-    }
-  }, [isAuthenticated, loadFileStructure, getToken]);
-
-  // Auto-expand folders for the currently selected file
-  useEffect(() => {
-    if (currentFile) {
-      expandToPath(currentFile);
-    }
-  }, [currentFile]);
-
-  // Fetch current storage usage for sidebar display
-  useEffect(() => {
-    let canceled = false;
-    const run = async () => {
-      try {
-        const token = await getToken();
-        if (!token) return;
-
-        const size = await fetchStorageSize(token);
-        if (!canceled) setUsedBytes(size);
-      } catch (_e) {
-        if (!canceled) setUsedBytes(null);
-      }
-    };
-    if (isAuthenticated) run();
-    return () => {
-      canceled = true;
-    };
-  }, [isAuthenticated, getToken]);
-
-  const handleRefreshFiles = async () => {
-    const token = await getToken();
-    if (token) {
-      await loadFileStructure(token);
-    }
-  };
-
-  const handleFileSelect = async (fileName: string) => {
-    // persist selection
-    try {
-      sessionStorage.setItem("selectedFile", fileName);
-    } catch {}
-    // expand folders to this file path
-    expandToPath(fileName);
-
-    // Navigate to the editor immediately for faster UI feedback
-    router.navigate({ to: "/editor" });
-
-    const token = await getToken();
-    if (token) {
-      const content = await loadFileContent(fileName, token);
-      const editor = useEditorState.getState().editor;
-      if (editor) {
-        try {
-          let cleanedHtml = content ?? "";
-          if (
-            typeof cleanedHtml === "string" &&
-            /<\s*html\b|<\s*body\b/i.test(cleanedHtml)
-          ) {
-            try {
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(cleanedHtml, "text/html");
-              cleanedHtml = doc.body ? doc.body.innerHTML : cleanedHtml;
-            } catch (_e) {
-              // keep original content on parse failure
-            }
-          }
-          cleanedHtml =
-            typeof cleanedHtml === "string" ? cleanedHtml.trim() : "";
-          console.log("cleanedHtml", cleanedHtml);
-
-          const slateValue = (editor as PlateEditor).api.html.deserialize({
-            element: cleanedHtml,
-          });
-          editor.tf.setValue(slateValue as any);
-        } catch (e) {
-          console.error("Failed to deserialize HTML into editor:", e);
-        }
-      }
-    }
-  };
-
-  const startCreateNew = () => {
-    setNewFileError(null);
-    setNewFileName("");
-    setIsSubmittingNew(false);
-    setIsCreatingNew(true);
-  };
-
-  const cancelCreateNew = () => {
-    if (isSubmittingNew) return; // don't cancel mid-submit
-    setIsCreatingNew(false);
-    setNewFileName("");
-    setNewFileError(null);
-  };
-
-  const getValidationError = (name: string): string | null => {
-    const trimmed = name.trim();
-    if (!trimmed) return "Title is required";
-    if (files[trimmed]) return "A note with this title already exists";
-    return null;
-  };
-
-  const submitCreateNew = async () => {
-    if (isSubmittingNew) return;
-    const errorMsg = getValidationError(newFileName);
-    if (errorMsg) {
-      setNewFileError(errorMsg);
-      return;
-    }
-    setIsSubmittingNew(true);
-    const trimmed = newFileName.trim();
-    const token = await getToken();
-    if (!token) {
-      setIsSubmittingNew(false);
-      return;
-    }
-    const initialContent = "<h1>New Document</h1><p>Start writing...</p>";
-    try {
-      await createNewFile(trimmed, initialContent, token);
-      const { editor } = useEditorState.getState();
-      if (editor) {
-        const slateValue = editor.api.html.deserialize(initialContent);
-        editor.tf.setValue(slateValue as any);
-      }
-      // persist and expand
-      try {
-        sessionStorage.setItem("selectedFile", trimmed);
-      } catch {}
-      expandToPath(trimmed);
-      // Hide and blur the inline input immediately after success
-      newFileInputRef.current?.blur();
-      setIsCreatingNew(false);
-      setNewFileName("");
-      setNewFileError(null);
-      setIsSubmittingNew(false);
-      await router.navigate({ to: "/editor" });
-    } catch (e) {
-      setNewFileError(e instanceof Error ? e.message : "Failed to create file");
-      setIsSubmittingNew(false);
-      setIsCreatingNew(false);
-    }
-  };
+    usedBytes,
+    profileMaxStorage,
+    isCreatingNew,
+    newFileName,
+    newFileError,
+    isSubmittingNew,
+    newFileInputRef,
+    expanded,
+    renamingPath,
+    renameInput,
+    handleRefreshFiles,
+    startCreateNew,
+    cancelCreateNew,
+    submitCreateNew,
+    toggleFolder,
+    beginRename,
+    submitRename,
+    handleDeleteFile,
+    handleMoveToFolder,
+    collectFolders,
+    selectFile,
+    setNewFileNameAndValidate,
+    setRenameInput,
+  } = useAppSidebar();
 
   const usedLabel = usedBytes != null ? formatBytes(usedBytes) : "—";
-  const maxLabel = profile?.maxStorage ? formatBytes(profile.maxStorage) : "—";
-
-  const toggleFolder = (path: string) => {
-    setExpanded((prev) => ({ ...prev, [path]: !prev[path] }));
-  };
-
-  const isFolder = (
-    node: null | FileStructureNode
-  ): node is FileStructureNode => !!node && typeof node === "object";
-
-  const handleDeleteFile = async (fullPath: string) => {
-    const token = await getToken();
-    if (!token) return;
-    try {
-      await deleteNote(fullPath, token);
-      // Refresh from backend to sync tree and files
-      await loadFileStructure(token);
-      // If deleting the open file
-      if (currentFile === fullPath) {
-        setCurrentFile("");
-        try {
-          sessionStorage.removeItem("selectedFile");
-        } catch {}
-        await router.navigate({ to: "/" });
-      }
-    } catch (e) {
-      console.error("Failed to delete note:", e);
-    }
-  };
-
-  const beginRename = (fullPath: string) => {
-    const parts = fullPath.split("/");
-    const base = parts.pop() || fullPath;
-    setRenamingPath(fullPath);
-    setRenameInput(base);
-  };
-
-  const submitRename = async (oldFullPath: string) => {
-    const parts = oldFullPath.split("/");
-    const parent = parts.slice(0, -1).join("/");
-    const newBase = renameInput.trim();
-    if (!newBase) return;
-    const newFullPath = parent ? `${parent}/${newBase}` : newBase;
-    const token = await getToken();
-    if (!token) return;
-    try {
-      await renameNote(oldFullPath, newFullPath, token);
-      await loadFileStructure(token);
-      setRenamingPath(null);
-      setRenameInput("");
-      // update selection if this file was selected
-      if (currentFile === oldFullPath) {
-        setCurrentFile(newFullPath);
-        try {
-          sessionStorage.setItem("selectedFile", newFullPath);
-        } catch {}
-        expandToPath(newFullPath);
-      }
-    } catch (e) {
-      console.error("Failed to rename note:", e);
-    }
-  };
-
-  const cancelRename = () => {
-    setRenamingPath(null);
-    setRenameInput("");
-  };
-
-  const collectFolders = (node: FileStructureNode, prefix = ""): string[] => {
-    const result: string[] = [];
-    for (const [name, child] of Object.entries(node)) {
-      const full = prefix ? `${prefix}/${name}` : name;
-      if (child && typeof child === "object") {
-        result.push(full);
-        result.push(...collectFolders(child, full));
-      }
-    }
-    return result;
-  };
-
-  const handleMoveToFolder = async (fullPath: string, targetFolder: string) => {
-    const parts = fullPath.split("/");
-    const base = parts.pop() || fullPath;
-    const newFullPath = targetFolder ? `${targetFolder}/${base}` : base;
-    const token = await getToken();
-    if (!token) return;
-    try {
-      await renameNote(fullPath, newFullPath, token);
-      await loadFileStructure(token);
-      if (currentFile === fullPath) {
-        setCurrentFile(newFullPath);
-        try {
-          sessionStorage.setItem("selectedFile", newFullPath);
-        } catch {}
-        expandToPath(newFullPath);
-      }
-    } catch (e) {
-      console.error("Failed to move note:", e);
-    }
-  };
+  const maxLabel = profileMaxStorage ? formatBytes(profileMaxStorage) : "—";
 
   const renderTree = (node: FileStructureNode, prefix = "") => {
     return (
@@ -356,14 +80,13 @@ export function AppSidebar() {
         {Object.entries(node).map(([name, child]) => {
           const fullPath = prefix ? `${prefix}/${name}` : name;
           if (child === null) {
-            // file
             const isRenaming = renamingPath === fullPath;
             return (
               <SidebarMenuItem key={fullPath}>
                 <ContextMenu>
                   <ContextMenuTrigger asChild>
                     <SidebarMenuButton
-                      onClick={() => !isRenaming && handleFileSelect(fullPath)}
+                      onClick={() => !isRenaming && selectFile(fullPath)}
                       isActive={currentFile === fullPath}
                       className="w-full justify-start sm:text-sm text-xs select-none"
                     >
@@ -380,10 +103,10 @@ export function AppSidebar() {
                               void submitRename(fullPath);
                             } else if (e.key === "Escape") {
                               e.preventDefault();
-                              cancelRename();
+                              cancelCreateNew();
                             }
                           }}
-                          onBlur={() => cancelRename()}
+                          onBlur={() => cancelCreateNew()}
                         />
                       ) : (
                         name
@@ -427,7 +150,6 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           }
-          // folder
           const open = !!expanded[fullPath];
           return (
             <li key={fullPath} className="list-none">
@@ -482,7 +204,7 @@ export function AppSidebar() {
 
               <Button
                 onClick={handleRefreshFiles}
-                disabled={isLoading || !isAuthenticated}
+                disabled={isLoading}
                 className="w-full justify-start sm:text-sm text-xs select-none"
                 variant="outline"
                 size="sm"
@@ -491,23 +213,19 @@ export function AppSidebar() {
                 Refresh Files
               </Button>
 
-              {isAuthenticated && (
-                <Button
-                  onClick={startCreateNew}
-                  disabled={isLoading || isSubmittingNew}
-                  className="w-full justify-start sm:text-sm text-xs select-none"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New File
-                </Button>
-              )}
-              {isAuthenticated && (
-                <div className="text-xs text-muted-foreground px-1">
-                  {Object.keys(files).length} notes • {usedLabel}/{maxLabel}
-                </div>
-              )}
+              <Button
+                onClick={startCreateNew}
+                disabled={isLoading || isSubmittingNew}
+                className="w-full justify-start sm:text-sm text-xs select-none"
+                variant="outline"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New File
+              </Button>
+              <div className="text-xs text-muted-foreground px-1">
+                {Object.keys(files).length} notes • {usedLabel}/{maxLabel}
+              </div>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -530,9 +248,7 @@ export function AppSidebar() {
                         aria-invalid={!!newFileError}
                         onChange={(e) => {
                           if (isSubmittingNew) return;
-                          const val = e.target.value;
-                          setNewFileName(val);
-                          setNewFileError(getValidationError(val));
+                          setNewFileNameAndValidate(e.target.value);
                         }}
                         onKeyDown={(e) => {
                           if (isSubmittingNew) {
@@ -541,12 +257,6 @@ export function AppSidebar() {
                           }
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            // Only attempt submit if valid
-                            const err = getValidationError(newFileName);
-                            if (err) {
-                              setNewFileError(err);
-                              return;
-                            }
                             void submitCreateNew();
                           } else if (e.key === "Escape") {
                             e.preventDefault();
@@ -554,7 +264,6 @@ export function AppSidebar() {
                           }
                         }}
                         onBlur={() => {
-                          // Cancel on click-away; ignore while submitting
                           if (!isSubmittingNew) cancelCreateNew();
                         }}
                         placeholder="New note title"
@@ -585,12 +294,15 @@ export function AppSidebar() {
         {isLoading && (
           <div className="text-sm text-muted-foreground">Loading...</div>
         )}
-        {!isAuthenticated && (
-          <div className="text-xs text-muted-foreground">
-            Please login to access your notes
-          </div>
-        )}
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+export function AppSidebar() {
+  return (
+    <AppSidebarProvider>
+      <AppSidebarInner />
+    </AppSidebarProvider>
   );
 }

@@ -7,8 +7,10 @@ interface ImportMetaEnv {
   readonly VITE_KINDE_DOMAIN: string;
   readonly VITE_KINDE_REDIRECT_URI: string;
   readonly VITE_KINDE_LOGOUT_URI: string;
+  readonly VITE_UPLOADTHING_URL: string;
+  readonly UPLOADTHING_TOKEN: string;
   readonly AUTH_SECRET: string;
-  readonly NODE_ENV: 'development' | 'production' | 'test';
+  readonly NODE_ENV: "development" | "production" | "test";
   // Add other VITE_ prefixed variables here
 }
 

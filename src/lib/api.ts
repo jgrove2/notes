@@ -1,5 +1,3 @@
-import { useEditorState } from "~/util/editor/editorState";
-
 const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
 // const API_BASE_URL = "http://localhost:8080";
 
@@ -41,8 +39,6 @@ export async function fetchWithAuth(
   if (!token) {
     throw new Error("No access token available");
   }
-
-  console.log("token", token);
 
   // Prepare headers
   const headers: HeadersInit = {
@@ -168,12 +164,6 @@ export async function saveNote(
   content: string,
   token: string
 ): Promise<void> {
-  console.log("saveNote API called with:", {
-    filename,
-    content,
-    token: token ? "present" : "missing",
-  });
-
   // Create an HTML blob from the content
   const htmlBlob = new Blob([content], {
     type: "text/html",
@@ -183,8 +173,6 @@ export async function saveNote(
   const formData = new FormData();
   formData.append("file", htmlBlob, `${filename}.html`);
   formData.append("filename", filename);
-
-  console.log("FormData created:", { filename, blobSize: htmlBlob.size });
 
   const response = await fetchWithAuth(
     `/notes`,
@@ -195,8 +183,6 @@ export async function saveNote(
     token
   );
 
-  console.log("API response status:", response.status);
-
   if (!response.ok) {
     const errorText = await response.text();
     console.error("API error response:", errorText);
@@ -205,8 +191,6 @@ export async function saveNote(
       response.status
     );
   }
-
-  console.log("saveNote completed successfully");
 }
 
 export async function createNote(
@@ -214,12 +198,6 @@ export async function createNote(
   content: string,
   token: string
 ): Promise<void> {
-  console.log("createNote API called with:", {
-    filename,
-    content,
-    token: token ? "present" : "missing",
-  });
-
   // Create an HTML blob from the content
   const htmlBlob = new Blob([content], {
     type: "text/html",
@@ -230,8 +208,6 @@ export async function createNote(
   formData.append("file", htmlBlob, `${filename}.html`);
   formData.append("filename", filename);
 
-  console.log("FormData created:", { filename, blobSize: htmlBlob.size });
-
   const response = await fetchWithAuth(
     `/notes`,
     {
@@ -241,8 +217,6 @@ export async function createNote(
     token
   );
 
-  console.log("API response status:", response.status);
-
   if (!response.ok) {
     const errorText = await response.text();
     console.error("API error response:", errorText);
@@ -251,8 +225,6 @@ export async function createNote(
       response.status
     );
   }
-
-  console.log("createNote completed successfully");
 }
 
 export async function listNotes(token: string): Promise<string[]> {
