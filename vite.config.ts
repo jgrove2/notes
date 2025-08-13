@@ -13,6 +13,14 @@ export default defineConfig({
       // Use local wrapper to avoid sourcemap issues
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Prefer Dart Sass implementation
+        api: "modern-compiler",
+      },
+    },
+  },
   ssr: {
     // Force these packages to be processed by Vite instead of Node.js
     // This allows Vite to handle the CSS imports properly and bundle ESM-only deps
