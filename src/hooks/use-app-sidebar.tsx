@@ -310,6 +310,7 @@ export function AppSidebarProvider({
     if (!token) return;
     const content = await loadFileContent(fileName, token);
     if (editor) {
+      editor.commands.focus();
       if (!content || content.length <= 0) {
         console.warn("No content found for file:", fileName);
         editor.commands.setContent("<html><body></body></html>");

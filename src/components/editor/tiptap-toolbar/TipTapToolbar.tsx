@@ -42,6 +42,7 @@ import { LinkIcon } from "~/components/tiptap-icons/link-icon";
 
 // --- Components ---
 import { ThemeToggle } from "~/components/editor/theme-toggle";
+import { ImageUploadButton } from "~/components/tiptap-ui/image-upload-button";
 
 export const MainToolbarContent = ({
   onHighlighterClick,
@@ -107,17 +108,13 @@ export const MainToolbarContent = ({
 
       <ToolbarSeparator />
 
-      {/* <ToolbarGroup>
+      <ToolbarGroup>
         <ImageUploadButton text="Add" />
-      </ToolbarGroup> */}
+      </ToolbarGroup>
 
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
-
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   );
 };

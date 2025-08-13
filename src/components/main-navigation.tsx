@@ -93,11 +93,14 @@ export function MainNavigation() {
                 <SidebarTrigger />
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/settings">
-                  <NavigationMenuLink className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/settings"
+                    className="group inline-flex h-8 w-max items-center justify-center rounded-md bg-background px-3 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  >
                     Settings
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
               {currentFile && (
                 <NavigationMenuItem>

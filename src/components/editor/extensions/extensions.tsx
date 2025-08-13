@@ -21,7 +21,7 @@ import "~/components/tiptap-node/list-node/list-node.scss";
 import "~/components/tiptap-node/image-node/image-node.scss";
 import "~/components/tiptap-node/heading-node/heading-node.scss";
 import "~/components/tiptap-node/paragraph-node/paragraph-node.scss";
-
+import { ImageUploadNode } from "~/components/tiptap-node/image-upload-node";
 export const Extensions = [
   StarterKit.configure({
     horizontalRule: false,
@@ -40,11 +40,4 @@ export const Extensions = [
   Superscript,
   Subscript,
   Selection,
-  //   ImageUploadNode.configure({
-  //     accept: "image/*",
-  //     maxSize: MAX_FILE_SIZE,
-  //     limit: 3,
-  //     upload: () => {},
-  //     onError: (error) => console.error("Upload failed:", error),
-  //   }),
 ];
