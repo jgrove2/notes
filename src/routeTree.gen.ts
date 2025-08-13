@@ -16,7 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EditorRouteImport } from './routes/editor'
 import { Route as IndexRouteImport } from './routes/index'
 import { ServerRoute as ApiUploadthingServerRouteImport } from './routes/api/uploadthing'
-import { ServerRoute as ApiTestServerRouteImport } from './routes/api/test'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -43,11 +42,6 @@ const IndexRoute = IndexRouteImport.update({
 const ApiUploadthingServerRoute = ApiUploadthingServerRouteImport.update({
   id: '/api/uploadthing',
   path: '/api/uploadthing',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiTestServerRoute = ApiTestServerRouteImport.update({
-  id: '/api/test',
-  path: '/api/test',
   getParentRoute: () => rootServerRouteImport,
 } as any)
 
@@ -85,28 +79,24 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
 }
 export interface FileServerRoutesByFullPath {
-  '/api/test': typeof ApiTestServerRoute
   '/api/uploadthing': typeof ApiUploadthingServerRoute
 }
 export interface FileServerRoutesByTo {
-  '/api/test': typeof ApiTestServerRoute
   '/api/uploadthing': typeof ApiUploadthingServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
-  '/api/test': typeof ApiTestServerRoute
   '/api/uploadthing': typeof ApiUploadthingServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/test' | '/api/uploadthing'
+  fullPaths: '/api/uploadthing'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/test' | '/api/uploadthing'
-  id: '__root__' | '/api/test' | '/api/uploadthing'
+  to: '/api/uploadthing'
+  id: '__root__' | '/api/uploadthing'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
-  ApiTestServerRoute: typeof ApiTestServerRoute
   ApiUploadthingServerRoute: typeof ApiUploadthingServerRoute
 }
 
@@ -151,13 +141,6 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiUploadthingServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
-    '/api/test': {
-      id: '/api/test'
-      path: '/api/test'
-      fullPath: '/api/test'
-      preLoaderRoute: typeof ApiTestServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
   }
 }
 
@@ -171,7 +154,6 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiTestServerRoute: ApiTestServerRoute,
   ApiUploadthingServerRoute: ApiUploadthingServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
