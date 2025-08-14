@@ -1,6 +1,3 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-
 export interface UserProfile {
   userId: number;
   firstName: string;
@@ -51,10 +48,13 @@ export async function fetchWithAuth(
     (headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}${endpoint}`,
+    {
+      ...options,
+      headers,
+    }
+  );
 
   return response;
 }
@@ -104,14 +104,17 @@ export async function createUserProfile(
     throw new Error("No access token available");
   }
 
-  const response = await fetch(`${API_BASE_URL}/user/profile`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(profileData),
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/user/profile`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(profileData),
+    }
+  );
 
   if (!response.ok) {
     throw new ApiError(
