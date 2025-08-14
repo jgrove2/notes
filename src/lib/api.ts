@@ -1,5 +1,5 @@
-const API_BASE_URL = "https://notes-backend-bjxn.onrender.com";
-// const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 export interface UserProfile {
   userId: number;
