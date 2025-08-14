@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 3001,
   },
-  plugins: [tanstackStart({ target: "netlify" }), tsConfigPaths()],
+  plugins: [tanstackStart({ target: "node-server" }), tsConfigPaths()],
   resolve: {
     alias: {
       // Use local wrapper to avoid sourcemap issues
