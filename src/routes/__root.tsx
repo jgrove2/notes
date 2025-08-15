@@ -58,6 +58,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html>
       <head>
+        <script
+          async
+          defer
+          src="https://tianji.jgrove.dev/tracker.js"
+          data-website-id="cmecbb7h00001v47qhwycezys"
+        ></script>
         <HeadContent />
       </head>
       <body>
